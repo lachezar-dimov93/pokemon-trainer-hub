@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+### Project Title
 
-## Getting Started
+Pokemon Trainer Hub
 
-First, run the development server:
+### Project Description
+
+A Next.js application displaying the original 8 Pokemon. Built with Next.js (App Router), TypeScript, and Tailwind CSS v4, prioritizing scalability, performance, and clean architectural patterns. Follows provided desktop Figma design.
+
+### Project Author
+
+Lachezar Dimov
+
+### Setup Instructions
+
+This project is designed for zero-friction setup.
+
+1. Clone and Install
+
+```bash
+git clone <repository-url>
+cd pokemon-trainer-hub
+npm install
+```
+
+2. Environment Variables (Optional) The application uses a Hybrid Fallback strategy. It runs out-of-the-box using default public endpoints.
+
+- To override settings (e.g., image hosting), copy the example file:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Approach & Architectural Decisions
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Framework: Next.js App Router
 
-## Learn More
+Chose the App Router (over the legacy Pages Router) to leverage the modern React architecture.
 
-To learn more about Next.js, take a look at the following resources:
+- React Server Components (RSC): By default, the pages and non-interactive components (`HeroSection`, `PokemonGrid`) render entirely on the server. This sends zero JavaScript to the client for those sections, maximizing performance and SEO.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Simplified Data Fetching: We can `await` data directly in the component (page.tsx), eliminating the need for useEffect chains or getServerSideProps boilerplate.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Metadata API: Easy integration of dynamic SEO tags.
 
-## Deploy on Vercel
+2. Styling: Tailwind CSS v4
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+I chose Tailwind CSS over CSS Modules or SCSS.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Why Tailwind?
+
+* Velocity: It allows for rapid implementation of the Figma specs without context-switching between TSX and CSS files.
+* Colocation: Styles live with the component, reducing "Dead Code" accumulation often seen in SCSS projects.
+* Consistency: It forces adherence to a design system (defined in `@theme`) rather than arbitrary magic values.
+
+- Why v4? So we leverage the new CSS-first configuration approach; thus removing the need for a JavaScript config file and improving build performance.
+
+- Trade-offs Considered: Tailwind HTML can look "messy" . However, extracting atomic components (PokemonCard) mitigates this by encapsulating the complexity.
+
+#### Global Styles & Responsive Fluidity (globals.css)
+
+Instead of relying strictly on breakpoints (mobile/tablet/desktop), implemented Fluid Typography using CSS clamp().
+
+- Reasoning: This ensures the design scales smoothly across any device width, not just specific breakpoints.
+
+- Implementation:
+
+```css
+@utility text-heading-1 {
+  /* Scales fluidly from 40px to 72px based on viewport width */
+  font-size: clamp(40px, 6vw, 72px);
+}
+```
+
+- UX Enhancement: Added a subtle Hover/Scale Animation to the Pokemon cards. While not explicitly in the Figma static design, this provides immediate feedback to the user that the element is interactive, improving the overall "feel" of the application.
+
+3. Project Structure: "Folder-by-Type"
+
+Intentionally chose a Folder-by-Type layout (`components/`, `services/`, `utils/`) over a Feature-based layout (`features/pokemon/...`).
+
+- Adhering to KISS principles: For a single-domain application (Pokemon), introducing feature folders adds unnecessary nesting depth.
+
+- Scalability Strategy: This structure is efficient for small-to-medium apps. If we were to add "Authentication" or "User Dashboard" domains later, we would refactor to a Feature-based structure at that time.
+
+### Folder Layout
+
+```
+├── app/                 # The "Pages" (Routing layer)
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+│   └── error.tsx        # Error boundary
+├── components/          # UI Building Blocks
+│   └── HeroSection.tsx
+│   └── PokemonGrid.tsx
+│   └── PokemonCard.tsx
+├── constants/
+│   └── content.ts
+├── services/            # External API calls (Data Layer)
+│   └── pokemonApi.ts
+├── utils/               # Helper functions
+│   └── formatting.ts
+├── types/               # Shared Interfaces (Added for clarity)
+│   └── index.ts
+```
+
+4. Content Strategy (DRY Principle)
+
+Centralized all strings in `constants/content.ts`. Notice that `TITLE` is defined once and reused for both the Hero UI and the SEO Metadata.
+
+```typescript
+// constants/content.ts
+const TITLE = "Trainer hub"; // Defined once
+const GRID_SUBTITLE = "Explore the original creatures...";
+
+export const CONTENT = {
+  hero: { title: TITLE }, // Used in UI
+  meta: { title: TITLE }, // Used in <head>
+  // ...
+};
+```
+
+Benefit: This is a strict application of DRY (Don't Repeat Yourself). Changing the marketing title in one place updates the entire application instantly. It also prepares the codebase for future Internationalization (i18n).
+
+5. Engineering Principles Applied
+
+- SOLID (Single Responsibility Principle): Decomposed the UI into three distinct components, each with one job:
+
+* `HeroSection`: Pure presentation (Static).
+
+* `PokemonGrid`: Layout strategy (Grid formation).
+
+* `PokemonCard`: Item display and interaction (Client-side image logic).
+
+- YAGNI (You Ain't Gonna Need It):
+
+* Did not implement a complex state management library (Redux/Zustand) because server state is handled by Next.js and local state is minimal.
+
+* Did not add `loading.tsx` because the SSG strategy ensures data is pre-loaded before the user arrives.
+
+- KISS:
+
+* Used standard `fetch` rather than going with `axios` or `react-query`, as the native API is sufficient for Server Components.
+
+6. Time spent - 2.5 hours
