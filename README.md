@@ -17,7 +17,7 @@ This project is designed for zero-friction setup.
 1. Clone and Install
 
 ```bash
-git clone <repository-url>
+git clone [<repository-url>](https://github.com/lachezar-dimov93/pokemon-trainer-hub)
 cd pokemon-trainer-hub
 npm install
 ```
